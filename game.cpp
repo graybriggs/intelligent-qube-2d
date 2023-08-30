@@ -47,6 +47,7 @@ void init_blocks() {
 
 	for (int i = 0; i < 4 * 15 + 4; ++i) {
 		block b(x, y);
+		b.set_block_type(block::block_type::STANDARD);
 		blocks.emplace_back(b);
 
 		x += BLOCK_SIZE_W;
@@ -56,8 +57,8 @@ void init_blocks() {
 		}
 	}
 
-	//blocks[25].set_block_type(block::block_type::ADVANTAGE);
-	//blocks[16].set_block_type(block::block_type::CAPTURE);
+	blocks[25].set_block_type(block::block_type::ADVANTAGE);
+	blocks[16].set_block_type(block::block_type::CAPTURE);
 
 }
 
@@ -70,7 +71,7 @@ void init_moving_blocks() {
 		for (int x = 0; x < 4; ++x) {
 			block b(START_OFFSET + BLOCK_SIZE_W * x, y * BLOCK_SIZE_H);
 			b.set_vel(-0.0001f, 0.0001f);
-			b.set_block_type(block::block_type::ADVANTAGE);
+			b.set_block_type(block::block_type::STANDARD);
 			active_blocks.emplace_back(b);
 		}
 	}
