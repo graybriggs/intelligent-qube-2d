@@ -111,9 +111,38 @@ void set_capture_block() {
 	};
 }
 
-void execute_capture() {
+void check_set_advantage(block& b, int pos) {
 
 	std::vector<int> adv;
+
+	for (auto& ab : active_blocks) {
+		if (b.get_position().x == ab.get_position().x && b.get_position().y == ab.get_position().y) {
+
+			adv.push_back(pos);
+			adv.push_back(pos - 1);
+			adv.push_back(pos + 1);
+
+			if (pos - GRID_SIZE_LENGTH > 0) {
+				adv.push_back(pos - GRID_SIZE_LENGTH);
+				adv.push_back(pos - GRID_SIZE_LENGTH + 1);
+				adv.push_back(pos - GRID_SIZE_LENGTH - 1);
+			}
+			if (pos + GRID_SIZE_LENGTH < GRID_SIZE_WIDTH * GRID_SIZE_LENGTH) {
+				adv.push_back(pos + GRID_SIZE_LENGTH);
+				adv.push_back(pos + GRID_SIZE_LENGTH + 1);
+				adv.push_back(pos + GRID_SIZE_LENGTH - 1);
+			}
+		}
+	}
+
+	if (adv.size() > 0) {
+		for (int a : adv) {
+			blocks[a].set_block_type(block::block_type::ADVANTAGE);
+		}
+	}
+}
+
+void execute_capture() {
 
 	for (int i = 0; i < blocks.size(); ++i) {
 		block b = blocks[i];
@@ -126,35 +155,12 @@ void execute_capture() {
 						ab.block_active(false);
 
 						if (ab.get_type() == block::block_type::ADVANTAGE) {
-							for (auto& ab : active_blocks) {
-								if (b.get_position().x == ab.get_position().x && b.get_position().y == ab.get_position().y) {
-
-									adv.push_back(i);
-									adv.push_back(i - 1);
-									adv.push_back(i + 1);
-
-									if (i - GRID_SIZE_LENGTH > 0) {
-										adv.push_back(i - GRID_SIZE_LENGTH);
-										adv.push_back(i - GRID_SIZE_LENGTH + 1);
-										adv.push_back(i - GRID_SIZE_LENGTH - 1);
-									}
-									if (i + GRID_SIZE_LENGTH < GRID_SIZE_WIDTH * GRID_SIZE_LENGTH) {
-										adv.push_back(i + GRID_SIZE_LENGTH);
-										adv.push_back(i + GRID_SIZE_LENGTH + 1);
-										adv.push_back(i + GRID_SIZE_LENGTH - 1);
-									}
-								}
-							}
+							check_set_advantage(b, i);
 							break;
 						}
 					}
 				}
 			}
-		}
-	}
-	if (adv.size() > 0) {
-		for (int a : adv) {
-			blocks[a].set_block_type(block::block_type::ADVANTAGE);
 		}
 	}
 }
