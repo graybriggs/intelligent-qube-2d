@@ -14,8 +14,8 @@ float block_move_delay = 2000.0f;
 std::vector<block> blocks;
 std::vector<block> active_blocks;
 
-constexpr int GRID_SIZE_WIDTH = 4;
-constexpr int GRID_SIZE_LENGTH = 15;
+constexpr int GRID_SIZE_WIDTH = 5;
+constexpr int GRID_SIZE_LENGTH = 16;
 
 constexpr int BLOCK_SIZE_W = 64;
 constexpr int BLOCK_SIZE_H = 64;
@@ -30,26 +30,12 @@ bool capture_flag = false;
 SDL_Rect player = { 100, 100, 16, 16 };
 
 
-Uint32 move_blocks_forward(Uint32 interval, void* param) {
-
-	std::vector<block>* vec = static_cast<std::vector<block>*>(param);
-
-	//SDL_Rect* pos = static_cast<SDL_Rect*>(param);
-
-	for (auto& b : *vec) {
-		b.update_position(-BLOCK_SIZE_W, 0);
-	}
-
-	return interval;
-}
-
-
 void init_blocks() {
 
 	int x = 0;
 	int y = 0;
 
-	for (int i = 0; i < 4 * 15 + 4; ++i) {
+	for (int i = 0; i < 5 * 16; ++i) {
 		block b(x, y);
 		b.set_block_type(block::block_type::STANDARD);
 		blocks.emplace_back(b);
@@ -71,7 +57,7 @@ void init_moving_blocks() {
 
 	constexpr int START_OFFSET = 12 * BLOCK_SIZE_W;
 
-	for (int y = 0; y < 4; ++y) {
+	for (int y = 0; y < 5; ++y) {
 		for (int x = 0; x < 4; ++x) {
 			block b(x * BLOCK_SIZE_W + START_OFFSET, y * BLOCK_SIZE_H);
 			b.set_vel(-0.0001f, 0.0001f);
@@ -80,8 +66,8 @@ void init_moving_blocks() {
 		}
 	}
 
-	active_blocks[6].set_block_type(block::block_type::ADVANTAGE);
-	active_blocks[0].set_block_type(block::block_type::FORBIDDEN);
+	active_blocks[16].set_block_type(block::block_type::ADVANTAGE);
+	//active_blocks[0].set_block_type(block::block_type::FORBIDDEN);
 }
 
 void update_time_logic(float dt) {
@@ -114,8 +100,10 @@ void update_moving_blocks(float dt) {
 void set_capture_block() {
 	SDL_Rect pp = { player.x, player.y };
 	for (int i = 0; i < blocks.size(); ++i) {
-		if (pp.x >= blocks[i].get_position().x + PLAY_AREA_OFFSET_X && pp.x < blocks[i].get_position().x + BLOCK_SIZE_W + PLAY_AREA_OFFSET_X
-			&& pp.y >= blocks[i].get_position().y + PLAY_AREA_OFFSET_Y && pp.y < blocks[i].get_position().y + BLOCK_SIZE_H + PLAY_AREA_OFFSET_Y) {
+		int bposx = blocks[i].get_position().x;
+		int bposy = blocks[i].get_position().y;
+		if (pp.x >= bposx + PLAY_AREA_OFFSET_X && pp.x < bposx + BLOCK_SIZE_W + PLAY_AREA_OFFSET_X
+			&& pp.y >= bposy + PLAY_AREA_OFFSET_Y && pp.y < bposy + BLOCK_SIZE_H + PLAY_AREA_OFFSET_Y) {
 			//printf("%d\n", i);
 			blocks[i].set_block_type(block::block_type::CAPTURE);
 			break;
@@ -125,20 +113,53 @@ void set_capture_block() {
 
 void execute_capture() {
 
-	for (auto& b : blocks) {
+	std::vector<int> adv;
+
+	for (int i = 0; i < blocks.size(); ++i) {
+		block b = blocks[i];
 		if (b.get_type() == block::block_type::CAPTURE) {
-			b.set_block_type(block::block_type::STANDARD);
+			blocks[i].set_block_type(block::block_type::STANDARD);
 
 			for (auto& ab : active_blocks) {
 				if (b.get_position().x == ab.get_position().x && b.get_position().y == ab.get_position().y) {
-					ab.block_active(false);
+					if (ab.is_active()) {
+						ab.block_active(false);
+
+						if (ab.get_type() == block::block_type::ADVANTAGE) {
+							for (auto& ab : active_blocks) {
+								if (b.get_position().x == ab.get_position().x && b.get_position().y == ab.get_position().y) {
+
+									adv.push_back(i);
+									adv.push_back(i - 1);
+									adv.push_back(i + 1);
+
+									if (i - GRID_SIZE_LENGTH > 0) {
+										adv.push_back(i - GRID_SIZE_LENGTH);
+										adv.push_back(i - GRID_SIZE_LENGTH + 1);
+										adv.push_back(i - GRID_SIZE_LENGTH - 1);
+									}
+									if (i + GRID_SIZE_LENGTH < GRID_SIZE_WIDTH * GRID_SIZE_LENGTH) {
+										adv.push_back(i + GRID_SIZE_LENGTH);
+										adv.push_back(i + GRID_SIZE_LENGTH + 1);
+										adv.push_back(i + GRID_SIZE_LENGTH - 1);
+									}
+								}
+							}
+							break;
+						}
+					}
 				}
 			}
 		}
-		else if (b.get_type() == block::block_type::ADVANTAGE) {
-
+	}
+	if (adv.size() > 0) {
+		for (int a : adv) {
+			blocks[a].set_block_type(block::block_type::ADVANTAGE);
 		}
 	}
+}
+
+void execute_advantage_capture() {
 
 }
 
@@ -189,7 +210,7 @@ void render_floor_blocks(SDL_Renderer* renderer) {
 		}
 		else if (b.get_type() == block::block_type::ADVANTAGE) {
 
-			SDL_SetRenderDrawColor(renderer, 0, 255, 0, 200);
+			SDL_SetRenderDrawColor(renderer, 0, 255, 0, 160);
 			SDL_RenderFillRect(renderer, &r);
 		}
 	}
