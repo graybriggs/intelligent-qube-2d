@@ -5,12 +5,14 @@
 
 #include <vector>
 
+namespace {
+
 int block_scale = 0;
 float next_move = 1000.0f;
 float block_move_delay = 2000.0f;
 
-static std::vector<block> blocks;
-static std::vector<block> active_blocks;
+std::vector<block> blocks;
+std::vector<block> active_blocks;
 
 constexpr int GRID_SIZE_WIDTH = 4;
 constexpr int GRID_SIZE_LENGTH = 15;
@@ -21,8 +23,8 @@ constexpr int BLOCK_SIZE_H = 64;
 constexpr int PLAY_AREA_OFFSET_X = 100;
 constexpr int PLAY_AREA_OFFSET_Y = 200;
 
-static bool run = true;
-static bool capture_flag = false;
+bool run = true;
+bool capture_flag = false;
 
 
 SDL_Rect player = { 100, 100, 16, 16 };
@@ -113,7 +115,7 @@ void set_capture_block() {
 	SDL_Rect pp = { player.x, player.y };
 	for (int i = 0; i < blocks.size(); ++i) {
 		if (pp.x >= blocks[i].get_position().x + PLAY_AREA_OFFSET_X && pp.x < blocks[i].get_position().x + BLOCK_SIZE_W + PLAY_AREA_OFFSET_X
-		&& pp.y >= blocks[i].get_position().y + PLAY_AREA_OFFSET_Y && pp.y < blocks[i].get_position().y + BLOCK_SIZE_H + PLAY_AREA_OFFSET_Y) {
+			&& pp.y >= blocks[i].get_position().y + PLAY_AREA_OFFSET_Y && pp.y < blocks[i].get_position().y + BLOCK_SIZE_H + PLAY_AREA_OFFSET_Y) {
 			//printf("%d\n", i);
 			blocks[i].set_block_type(block::block_type::CAPTURE);
 			break;
@@ -155,7 +157,7 @@ void update_player(float dt) {
 		player.y += 1 * dt;
 	}
 	if (input_state_button(INPUT_KEY_SPACE)) {
-		
+
 		if (capture_flag) {
 			execute_capture();
 			capture_flag = false;
@@ -226,6 +228,9 @@ void render_player(SDL_Renderer* renderer) {
 	SDL_RenderFillRect(renderer, &r);
 }
 
+} // namespace
+
+
 void init_game() {
 	init_blocks();
 	init_moving_blocks();
@@ -245,3 +250,4 @@ void render_game(SDL_Renderer* renderer) {
 	render_active_blocks(renderer);
 	render_player(renderer);
 }
+
