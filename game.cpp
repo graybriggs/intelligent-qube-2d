@@ -7,6 +7,7 @@
 
 namespace {
 
+
 int block_scale = 0;
 float next_move = 1000.0f;
 float block_move_delay = 2000.0f;
@@ -150,7 +151,9 @@ void execute_capture() {
 			blocks[i].set_block_type(block::block_type::STANDARD);
 
 			for (auto& ab : active_blocks) {
-				if (b.get_position().x == ab.get_position().x && b.get_position().y == ab.get_position().y) {
+				int bx = b.get_position().x;
+				int by = b.get_position().y;
+				if (bx == ab.get_position().x && by == ab.get_position().y) {
 					if (ab.is_active()) {
 						ab.block_active(false);
 
@@ -167,6 +170,19 @@ void execute_capture() {
 
 void execute_advantage_capture() {
 
+	for (auto& b : blocks) {
+		if (b.get_type() == block::block_type::ADVANTAGE) {
+			b.set_block_type(block::block_type::STANDARD);
+			int bx = b.get_position().x;
+			int by = b.get_position().y;
+
+			for (auto& ab : active_blocks) {
+				if (bx == ab.get_position().x && by == ab.get_position().y) {
+					ab.block_active(false);
+				}
+			}
+		}
+	}
 }
 
 void update_player(float dt) {
@@ -182,6 +198,9 @@ void update_player(float dt) {
 	}
 	if (input_state_button(INPUT_KEY_DOWN)) {
 		player.y += 1 * dt;
+	}
+	if (input_state_button(INPUT_KEY_X)) {
+		execute_advantage_capture();
 	}
 	if (input_state_button(INPUT_KEY_SPACE)) {
 
