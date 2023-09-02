@@ -7,8 +7,8 @@
 
 namespace {
 
+int fallen_blocks = 0;
 
-int block_scale = 0;
 float next_move = 1000.0f;
 float block_move_delay = 2000.0f;
 
@@ -26,6 +26,7 @@ constexpr int PLAY_AREA_OFFSET_Y = 200;
 
 bool run = true;
 bool capture_flag = false;
+int block_scale = BLOCK_SIZE_W;
 
 
 SDL_Rect player = { 100, 100, 16, 16 };
@@ -39,6 +40,7 @@ void init_blocks() {
 	for (int i = 0; i < 5 * 16; ++i) {
 		block b(x, y);
 		b.set_block_type(block::block_type::STANDARD);
+		b.block_active(true);
 		blocks.emplace_back(b);
 
 		x += BLOCK_SIZE_W;
@@ -47,10 +49,6 @@ void init_blocks() {
 			y += BLOCK_SIZE_H;
 		}
 	}
-
-	//blocks[25].set_block_type(block::block_type::ADVANTAGE);
-	//blocks[16].set_block_type(block::block_type::CAPTURE);
-
 }
 
 
@@ -67,8 +65,10 @@ void init_moving_blocks() {
 		}
 	}
 
+	active_blocks[5].set_block_type(block::block_type::FORBIDDEN);
+	active_blocks[19].set_block_type(block::block_type::FORBIDDEN);
+	active_blocks[6].set_block_type(block::block_type::ADVANTAGE);
 	active_blocks[16].set_block_type(block::block_type::ADVANTAGE);
-	//active_blocks[0].set_block_type(block::block_type::FORBIDDEN);
 }
 
 void update_time_logic(float dt) {
@@ -105,7 +105,6 @@ void set_capture_block() {
 		int bposy = blocks[i].get_position().y;
 		if (pp.x >= bposx + PLAY_AREA_OFFSET_X && pp.x < bposx + BLOCK_SIZE_W + PLAY_AREA_OFFSET_X
 			&& pp.y >= bposy + PLAY_AREA_OFFSET_Y && pp.y < bposy + BLOCK_SIZE_H + PLAY_AREA_OFFSET_Y) {
-			//printf("%d\n", i);
 			blocks[i].set_block_type(block::block_type::CAPTURE);
 			break;
 		}
@@ -160,6 +159,15 @@ void execute_capture() {
 						if (ab.get_type() == block::block_type::ADVANTAGE) {
 							check_set_advantage(b, i);
 							break;
+						}
+						else if (ab.get_type() == block::block_type::FORBIDDEN) {
+
+							for (auto& b : blocks) {
+								if (b.get_position().x <= block_scale) {
+									b.block_active(false);
+								}
+							}
+							block_scale += BLOCK_SIZE_W;
 						}
 					}
 				}
@@ -219,24 +227,27 @@ void update_player(float dt) {
 void render_floor_blocks(SDL_Renderer* renderer) {
 
 	for (auto& b : blocks) {
-		SDL_Rect r = b.get_position();
-		r.x += PLAY_AREA_OFFSET_X;
-		r.y += PLAY_AREA_OFFSET_Y;
 
-		if (b.get_type() == block::block_type::STANDARD) {
-			SDL_SetRenderDrawColor(renderer, 255, 216, 255, 255);
-			SDL_RenderFillRect(renderer, &r);
-			SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-			SDL_RenderDrawRect(renderer, &r);
-		}
-		else if (b.get_type() == block::block_type::CAPTURE) {
-			SDL_SetRenderDrawColor(renderer, 255, 0, 0, 200);
-			SDL_RenderFillRect(renderer, &r);
-		}
-		else if (b.get_type() == block::block_type::ADVANTAGE) {
+		if (b.is_active()) {
+			SDL_Rect r = b.get_position();
+			r.x += PLAY_AREA_OFFSET_X;
+			r.y += PLAY_AREA_OFFSET_Y;
 
-			SDL_SetRenderDrawColor(renderer, 0, 255, 0, 160);
-			SDL_RenderFillRect(renderer, &r);
+			if (b.get_type() == block::block_type::STANDARD) {
+				SDL_SetRenderDrawColor(renderer, 255, 216, 255, 255);
+				SDL_RenderFillRect(renderer, &r);
+				SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+				SDL_RenderDrawRect(renderer, &r);
+			}
+			else if (b.get_type() == block::block_type::CAPTURE) {
+				SDL_SetRenderDrawColor(renderer, 255, 0, 0, 200);
+				SDL_RenderFillRect(renderer, &r);
+			}
+			else if (b.get_type() == block::block_type::ADVANTAGE) {
+
+				SDL_SetRenderDrawColor(renderer, 0, 255, 0, 160);
+				SDL_RenderFillRect(renderer, &r);
+			}
 		}
 	}
 }
